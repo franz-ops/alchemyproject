@@ -52,5 +52,11 @@
   "packageManager": "yarn@3.2.3",
   "engines": {
     "node": ">=18.18.0"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.2.0",
+    "next": "latest",
+    "openzeppelin-contracts": "^4.0.0",
+    "openzeppelin-solidity": "^3.4.2"
   }
 }
