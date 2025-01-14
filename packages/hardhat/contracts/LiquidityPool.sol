@@ -117,12 +117,12 @@ contract LiquidityPool {
         require(liquidity > 0, "Amount must be greater than 0");
         require(lpToken.balanceOf(msg.sender) >= liquidity, "Insufficient LP tokens");
 
-        // Burn the LP tokens from the user
-        lpToken.burn(msg.sender, liquidity);
-
         // Calculate the amount of tokenA and tokenB to send to the user
         uint256 amountA = (tokenA_balance * liquidity) / lpToken.totalSupply();
         uint256 amountB = (tokenB_balance * liquidity) / lpToken.totalSupply();
+
+        // Burn the LP tokens from the user
+        lpToken.burn(msg.sender, liquidity);
 
         // Update the balances
         tokenA_balance -= amountA;
