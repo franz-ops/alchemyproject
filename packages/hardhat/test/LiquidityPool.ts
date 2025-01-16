@@ -27,7 +27,11 @@ describe("LiquidityPool", function () {
     const usdc_symbol = "USDC";
     liquidityPool = await LiquidityPoolFactory.deploy(wethaddr, usdcaddr, weth_symbol, usdc_symbol); //weth/usdc
     await liquidityPool.waitForDeployment();
-    console.log("LiquidityPool deployed to:", liquidityPool.address);
+
+    // Mint some tokens to user1
+    await weth.connect(owner).mint(user1.address, ethers.parseEther("5"));
+    await usdc.connect(owner).mint(user1.address, ethers.parseUnits("15000", 18));
+
     return { liquidityPool, wethaddr, usdcaddr, owner, weth, usdc, user1 };
   }
 
@@ -35,7 +39,6 @@ describe("LiquidityPool", function () {
     it("Should deploy successfully", async function () {
       const { liquidityPool } = await loadFixture(deployLiquidityPoolFixture);
       const address = await liquidityPool.getAddress();
-      console.log(address);
       expect(address).to.be.properAddress;
     });
 
@@ -77,7 +80,7 @@ describe("LiquidityPool", function () {
       const lpToken = await ethers.getContractAt("LiquidityPoolToken", lpTokenAddr);
       const lpTokenBalance = await lpToken.balanceOf(owner.address);
       const totalSupply = await lpToken.totalSupply();
-      console.log(lpTokenBalance.toString());
+      console.log("Owner LP Token Balance: ", lpTokenBalance);
 
       // expect 54.77 LP tokens to be minted
       expect(lpTokenBalance).to.be.lessThan(ethers.parseUnits("5478", 16));
@@ -106,8 +109,6 @@ describe("LiquidityPool", function () {
       await liquidityPool.connect(owner).deposit(amountWETH, amountUSDC);
 
       // Second deposit of user1
-      await weth.connect(owner).mint(user1.address, ethers.parseEther("5"));
-      await usdc.connect(owner).mint(user1.address, ethers.parseUnits("15000", 18));
       const amountWETH2 = ethers.parseEther("2");
       const amountUSDC2 = ethers.parseUnits("8000", 18);
 
@@ -135,10 +136,10 @@ describe("LiquidityPool", function () {
       // expect 54.77 LP tokens to be minted
       expect(totalSupply).to.be.lessThan(ethers.parseUnits("16433", 16));
       expect(totalSupply).to.be.greaterThan(ethers.parseUnits("16431", 16));
-      console.log(totalSupply.toString());
+      console.log("Total LP Token Supply: ", totalSupply);
     });
 
-    it("Should remove liquidity successfully", async function () {
+    it("Should remove liquidity successfully and give back exact token amounts", async function () {
       const { liquidityPool, owner, weth, usdc, user1 } = await loadFixture(deployLiquidityPoolFixture);
       const WETHBalance = await weth.balanceOf(owner.address);
       const USDCBalance = await usdc.balanceOf(owner.address);
@@ -180,6 +181,69 @@ describe("LiquidityPool", function () {
       // LP token owner balance should be 0
       expect(lpTokenBalance).to.be.equal(0);
 
+    });
+  });
+
+  describe("Swap", function () {
+    it("Should Swap tokens successfully", async function () {
+      const { liquidityPool, owner, weth, usdc, user1 } = await loadFixture(deployLiquidityPoolFixture);
+      const LPAddress = await liquidityPool.getAddress();
+      const WETHAddress = await weth.getAddress();
+
+      // Owner deposits 10 WETH and 30000 USDC into the pool
+      const amountWETH = ethers.parseEther("10");
+      const amountUSDC = ethers.parseUnits("30000", 18);
+
+      await weth.connect(owner).approve(LPAddress, amountWETH);
+      await usdc.connect(owner).approve(LPAddress, amountUSDC);
+
+      await liquidityPool.connect(owner).deposit(amountWETH, amountUSDC);
+
+      // User1 swaps 1 WETH to USDC
+      let initialWETHBalance = await weth.balanceOf(user1.address);
+      let initialUSDCBalance = await usdc.balanceOf(user1.address);
+      await weth.connect(user1).approve(LPAddress, ethers.parseEther("1"));
+      await liquidityPool.connect(user1).swap(WETHAddress, ethers.parseEther("1"));
+      
+      // Check balances
+      let finalWETHBalance = await weth.balanceOf(user1.address);
+      let finalUSDCBalance = await usdc.balanceOf(user1.address);
+      console.log("Initial WETH balance: ", initialWETHBalance);
+      console.log("Final WETH balance: ", finalWETHBalance);
+
+      expect(finalWETHBalance).to.be.equal(initialWETHBalance - ethers.parseEther("1"));
+      
+      expect(finalUSDCBalance).to.be.greaterThan(initialUSDCBalance);
+
+      console.log("Initial USDC balance: ", initialUSDCBalance);
+      console.log("Final USDC balance: ", finalUSDCBalance);
+    });
+
+    it("Should take 0.3% fee on swap", async function () {
+      const { liquidityPool, owner, weth, usdc, user1 } = await loadFixture(deployLiquidityPoolFixture);
+      const LPAddress = await liquidityPool.getAddress();
+      const WETHAddress = await weth.getAddress();
+      let initialUSDCBalance = await usdc.balanceOf(user1.address);
+      
+      // Owner deposits 10 WETH and 30000 USDC into the pool
+      // Assuming 1 ETH = 3000 USDC
+      const amountDepositWETH = ethers.parseEther("10");
+      const amountDepositUSDC = ethers.parseUnits("30000", 18);
+
+      await weth.connect(owner).approve(LPAddress, amountDepositWETH);
+      await usdc.connect(owner).approve(LPAddress, amountDepositUSDC);
+      await liquidityPool.connect(owner).deposit(amountDepositWETH, amountDepositUSDC);
+      
+
+      // The pool has 10 WETH and 30000 USDC, user1 swaps 1 WETH to USDC
+      await weth.connect(user1).approve(LPAddress, ethers.parseEther("1"));
+      await liquidityPool.connect(user1).swap(WETHAddress, ethers.parseEther("1"));
+      let finalUSDCBalance = await usdc.balanceOf(user1.address);
+      console.log("Initial USDC balance: ", initialUSDCBalance);
+      console.log("Final USDC balance: ", finalUSDCBalance);
+
+      
+      console.log(await liquidityPool.balance);
     });
   });
 });
