@@ -227,8 +227,8 @@ describe("LiquidityPool", function () {
       
       // Owner deposits 10 WETH and 30000 USDC into the pool
       // Assuming 1 ETH = 3000 USDC
-      const amountDepositWETH = ethers.parseEther("10");
-      const amountDepositUSDC = ethers.parseUnits("30000", 18);
+      const amountDepositWETH = ethers.parseEther("1000");
+      const amountDepositUSDC = ethers.parseUnits("3000000", 18);
 
       await weth.connect(owner).approve(LPAddress, amountDepositWETH);
       await usdc.connect(owner).approve(LPAddress, amountDepositUSDC);
@@ -242,8 +242,11 @@ describe("LiquidityPool", function () {
       console.log("Initial USDC balance: ", initialUSDCBalance);
       console.log("Final USDC balance: ", finalUSDCBalance);
 
-      
-      console.log(await liquidityPool.balance);
+      // With a Pool with large reserves, the swap should be close to the market price
+      // The swap fee is 0.3% of the swap amount, so 
+      // 1 WETH = 3000 USDC, 0.3% of 3000 = 9 USDC. So the fee should be approximately 9 USDC. (considering slippage)
+      expect(finalUSDCBalance - initialUSDCBalance).to.be.greaterThan(ethers.parseEther("2980"));
+      expect(finalUSDCBalance - initialUSDCBalance).to.be.lessThan(ethers.parseEther("3000"));
     });
   });
 });

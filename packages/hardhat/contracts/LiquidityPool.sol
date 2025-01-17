@@ -98,25 +98,25 @@ contract LiquidityPool {
         uint256 normalizedAmount = normalizeAmount(inputToken, amount);
         // console.log("Normalized Amount To Swap: %s", normalizedAmount);
         uint256 amountwithfee = normalizedAmount * (1000 - fee) / 1000;
-         console.log("Amount To Swap with fee: %s", amountwithfee);
+        // console.log("Amount To Swap with fee: %s", amountwithfee);
 
-        console.log("Input Reserve: %s", inputReserve); 
-        console.log("Output Reserve: %s", outputReserve);
-        console.log("LP Token Total Supply: %s", lpToken.totalSupply());
+        // console.log("Input Reserve: %s", inputReserve); 
+        // console.log("Output Reserve: %s", outputReserve);
+        // console.log("LP Token Total Supply: %s", lpToken.totalSupply());
         
         // Calculate the output amount based on X * Y = K curve
-        uint256 outputAmount = outputReserve - (lpToken.totalSupply() / (inputReserve + amountwithfee));
+        uint256 outputAmount = ( outputReserve * amountwithfee ) / (inputReserve + amountwithfee );
 
         require(outputAmount > 0, "Insufficient output amount");
 
         // Transfer the input token from the user to the contract (considering the fee)
         inputToken.transferFrom(msg.sender, address(this), amount);
 
-        console.log("Output Amount: %s", outputAmount);
+        // console.log("Output Amount: %s", outputAmount);
         // Denormalizing the output amount for the user
         uint256 denormalizedOutputAmount = denormalizeAmount(outputToken, outputAmount);
 
-        console.log("Denormalized output amount: %s", denormalizedOutputAmount);
+        // console.log("Denormalized output amount: %s", denormalizedOutputAmount);
         // Transfer the output tokens to the user
         outputToken.transfer(msg.sender, denormalizedOutputAmount);
 
