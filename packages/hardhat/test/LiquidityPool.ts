@@ -191,8 +191,8 @@ describe("LiquidityPool", function () {
       const WETHAddress = await weth.getAddress();
 
       // Owner deposits 10 WETH and 30000 USDC into the pool
-      const amountWETH = ethers.parseEther("10");
-      const amountUSDC = ethers.parseUnits("30000", 18);
+      const amountWETH = ethers.parseEther("10000");
+      const amountUSDC = ethers.parseUnits("30000000", 18);
 
       await weth.connect(owner).approve(LPAddress, amountWETH);
       await usdc.connect(owner).approve(LPAddress, amountUSDC);
@@ -227,13 +227,14 @@ describe("LiquidityPool", function () {
       
       // Owner deposits 10 WETH and 30000 USDC into the pool
       // Assuming 1 ETH = 3000 USDC
-      const amountDepositWETH = ethers.parseEther("1000");
-      const amountDepositUSDC = ethers.parseUnits("3000000", 18);
+      const amountDepositWETH = ethers.parseEther("10000");
+      const amountDepositUSDC = ethers.parseUnits("30000000", 18);
 
       await weth.connect(owner).approve(LPAddress, amountDepositWETH);
       await usdc.connect(owner).approve(LPAddress, amountDepositUSDC);
       await liquidityPool.connect(owner).deposit(amountDepositWETH, amountDepositUSDC);
       
+      let InitialTokenBBalance = await liquidityPool.tokenB_balance(); // USDC balance in the pool
 
       // The pool has 10 WETH and 30000 USDC, user1 swaps 1 WETH to USDC
       await weth.connect(user1).approve(LPAddress, ethers.parseEther("1"));
@@ -245,8 +246,14 @@ describe("LiquidityPool", function () {
       // With a Pool with large reserves, the swap should be close to the market price
       // The swap fee is 0.3% of the swap amount, so 
       // 1 WETH = 3000 USDC, 0.3% of 3000 = 9 USDC. So the fee should be approximately 9 USDC. (considering slippage)
-      expect(finalUSDCBalance - initialUSDCBalance).to.be.greaterThan(ethers.parseEther("2980"));
-      expect(finalUSDCBalance - initialUSDCBalance).to.be.lessThan(ethers.parseEther("3000"));
+      let swappedAmount = finalUSDCBalance - initialUSDCBalance;
+      expect(swappedAmount).to.be.greaterThan(ethers.parseEther("2980"));
+      expect(swappedAmount).to.be.lessThan(ethers.parseEther("3000"));
+      console.log("Token A balance: ", await liquidityPool.tokenA_balance());
+      console.log("Token B balance: ", await liquidityPool.tokenB_balance());
+      
+      // USDC balance in the pool should be reduced by swapped amount + 9 USDC
+      expect(await liquidityPool.tokenB_balance()).to.be.approximately( InitialTokenBBalance - swappedAmount, ethers.parseEther("1") );
     });
   });
 });
