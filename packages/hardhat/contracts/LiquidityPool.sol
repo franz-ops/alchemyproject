@@ -9,6 +9,7 @@ import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./LiquidityPoolToken.sol";
+import "./IPricingCurve.sol";
 
 /**
  * A smart contract that allows changing a state variable of the contract and tracking the changes
@@ -25,14 +26,18 @@ contract LiquidityPool {
     uint256 public tokenB_balance;
     uint256 public constant fee = 3;
 
+    IPricingCurve public pricingCurve;
+
     LiquidityPoolToken public lpToken;
+
 
     // Constructor: Called once on contract deployment
     // Check packages/hardhat/deploy/00_deploy_your_contract.ts
-    constructor(address _tokenA, address _tokenB, string memory tokenA_symbol, string memory tokenB_symbol) {
+    constructor(address _tokenA, address _tokenB, string memory tokenA_symbol, string memory tokenB_symbol, address _pricingCurve) {
         owner = msg.sender;
         tokenA = IERC20(_tokenA);
         tokenB = IERC20(_tokenB);
+        pricingCurve = IPricingCurve(_pricingCurve);
 
         string memory LPTokenSymbol = string(abi.encodePacked(tokenA_symbol, "/", tokenB_symbol, "-LP"));
         string memory LPTokenName = string(abi.encodePacked(tokenA_symbol, "/", tokenB_symbol, " Liquidity Pool Token"));
@@ -63,15 +68,13 @@ contract LiquidityPool {
         tokenB.transferFrom(msg.sender, address(this), amountB);
 
         // Mint LP tokens to the user
-        uint256 lpTokenAmount;
-        if (tokenA_balance == 0 && tokenB_balance == 0) {
-            lpTokenAmount = sqrt(normalizedAmountA * normalizedAmountB);
-        } else {
-            lpTokenAmount = min(
-                (normalizedAmountA * lpToken.totalSupply()) / tokenA_balance,
-                (normalizedAmountB * lpToken.totalSupply()) / tokenB_balance
-            );
-        }
+        uint256 lpTokenAmount = pricingCurve.getLPTokensAmount(
+            normalizedAmountA,
+            normalizedAmountB,
+            lpToken.totalSupply(),
+            tokenA_balance,
+            tokenB_balance
+        );
 
         // Update the normalized balances
         tokenA_balance += normalizedAmountA;
@@ -105,7 +108,8 @@ contract LiquidityPool {
         // console.log("LP Token Total Supply: %s", lpToken.totalSupply());
         
         // Calculate the output amount based on X * Y = K curve
-        uint256 outputAmount = ( outputReserve * amountwithfee ) / (inputReserve + amountwithfee );
+        // uint256 outputAmount = ( outputReserve * amountwithfee ) / (inputReserve + amountwithfee );
+        uint256 outputAmount = pricingCurve.getOutputAmount(amountwithfee, inputReserve, outputReserve, fee);
 
         require(outputAmount > 0, "Insufficient output amount");
 
@@ -169,25 +173,6 @@ contract LiquidityPool {
     function withdraw() public isOwner {
         (bool success, ) = owner.call{ value: address(this).balance }("");
         require(success, "Failed to send Ether");
-    }
-
-    // Utility function to find the minimum of two values
-    function min(uint256 x, uint256 y) internal pure returns (uint256) {
-        return x < y ? x : y;
-    }
-
-    // Utility function to calculate square root
-    function sqrt(uint y) internal pure returns (uint z) {
-        if (y > 3) {
-            z = y;
-            uint x = y / 2 + 1;
-            while (x < z) {
-                z = x;
-                x = (y / x + x) / 2;
-            }
-        } else if (y != 0) {
-            z = 1;
-        }
     }
 
     /**

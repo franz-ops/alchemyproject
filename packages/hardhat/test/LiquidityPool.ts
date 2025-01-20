@@ -8,11 +8,17 @@ describe("LiquidityPool", function () {
   let usdc: any;
   let wethaddr: string;
   let usdcaddr: string;
+  let productcurve: any;
 
   async function deployLiquidityPoolFixture() {
     const [owner, user1] = await ethers.getSigners();
     const LiquidityPoolFactory = await ethers.getContractFactory("LiquidityPool");
     const MokenTokenFactory = await ethers.getContractFactory("MockToken");
+    const ProductCurveFactory = await ethers.getContractFactory("ConstantProductCurve");
+
+    productcurve = await ProductCurveFactory.deploy();
+    productcurve = await productcurve.waitForDeployment();
+    const productcurveaddr = (await productcurve.getAddress()).toLowerCase();
 
     // create weth and usdc tokens
     weth = await MokenTokenFactory.deploy("Wrapped Ether", "WETH", ethers.parseEther("1000000"));
@@ -25,7 +31,7 @@ describe("LiquidityPool", function () {
 
     const weth_symbol = "WETH";
     const usdc_symbol = "USDC";
-    liquidityPool = await LiquidityPoolFactory.deploy(wethaddr, usdcaddr, weth_symbol, usdc_symbol); //weth/usdc
+    liquidityPool = await LiquidityPoolFactory.deploy(wethaddr, usdcaddr, weth_symbol, usdc_symbol, productcurveaddr); //weth/usdc
     await liquidityPool.waitForDeployment();
 
     // Mint some tokens to user1
