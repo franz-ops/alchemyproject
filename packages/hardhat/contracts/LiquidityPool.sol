@@ -83,7 +83,8 @@ contract LiquidityPool {
         lpToken.mint(msg.sender, lpTokenAmount);
     }
 
-    function swap(address inputTokenContract, uint256 amount) external {
+    // Funzione principale con il parametro recipient
+    function swap(address inputTokenContract, uint256 amount, address recipient) public {
         require(amount > 0, "Amount must be greater than 0");
         require(
             inputTokenContract == address(tokenA) || inputTokenContract == address(tokenB),
@@ -99,30 +100,21 @@ contract LiquidityPool {
 
         // Normalizing the input amount
         uint256 normalizedAmount = normalizeAmount(inputToken, amount);
-        // console.log("Normalized Amount To Swap: %s", normalizedAmount);
         uint256 amountwithfee = normalizedAmount * (1000 - fee) / 1000;
-        // console.log("Amount To Swap with fee: %s", amountwithfee);
 
-        // console.log("Input Reserve: %s", inputReserve); 
-        // console.log("Output Reserve: %s", outputReserve);
-        // console.log("LP Token Total Supply: %s", lpToken.totalSupply());
-        
         // Calculate the output amount based on X * Y = K curve
-        // uint256 outputAmount = ( outputReserve * amountwithfee ) / (inputReserve + amountwithfee );
         uint256 outputAmount = pricingCurve.getOutputAmount(amountwithfee, inputReserve, outputReserve, fee);
 
         require(outputAmount > 0, "Insufficient output amount");
 
         // Transfer the input token from the user to the contract (considering the fee)
-        inputToken.transferFrom(msg.sender, address(this), amount);
+        inputToken.transferFrom(recipient, address(this), amount);
 
-        // console.log("Output Amount: %s", outputAmount);
         // Denormalizing the output amount for the user
         uint256 denormalizedOutputAmount = denormalizeAmount(outputToken, outputAmount);
 
-        // console.log("Denormalized output amount: %s", denormalizedOutputAmount);
-        // Transfer the output tokens to the user
-        outputToken.transfer(msg.sender, denormalizedOutputAmount);
+        // Transfer the output tokens to the recipient
+        outputToken.transfer(recipient, denormalizedOutputAmount);
 
         // Update the balances
         if (isTokenA) {
@@ -133,6 +125,12 @@ contract LiquidityPool {
             tokenB_balance += normalizedAmount;
         }
     }
+
+    // Funzione sovraccaricata che usa msg.sender come destinatario
+    function swap(address inputTokenContract, uint256 amount) external {
+        swap(inputTokenContract, amount, msg.sender);
+    }
+
 
     function withdrawLiquidity(uint256 liquidity) external {
         require(liquidity > 0, "Amount must be greater than 0");
