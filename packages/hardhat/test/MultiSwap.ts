@@ -49,7 +49,6 @@ async function signPermit(token: any, spender: any, owner: any, _value: any, dea
     console.log("types:", types);
     console.log("value:", value);
 
-    console.log(await owner.signTypedData(domain, types, value));
     return await owner.signTypedData(domain, types, value);
 }
 
@@ -167,8 +166,6 @@ describe("MultiSwap", function () {
                 s: s2,
             },
         ]
-
-        console.log("Steps:", steps);
         
         await multiswap_executor.connect(user1).executeBatchSwapWithPermit(steps);
         console.log("Swap ETH/USDC and WBTC/USDC done");
@@ -176,6 +173,9 @@ describe("MultiSwap", function () {
         console.log("weth balance: ", await weth.balanceOf(user1.address));
         console.log("wbtc balance: ", await wbtc.balanceOf(user1.address));
 
+        expect(await usdc.balanceOf(user1.address)).to.be.gt(ethers.parseUnits("15000", 18));
+        expect(await weth.balanceOf(user1.address)).to.be.eq(ethers.parseEther("4"));
+        expect(await wbtc.balanceOf(user1.address)).to.be.eq(ethers.parseUnits("1", 18));
     });
   });    
 });
