@@ -1,80 +1,117 @@
-# 🏗 Scaffold-ETH 2
+# MultiSwap & Configurable Liquidity Pools
 
-<h4 align="center">
-  <a href="https://docs.scaffoldeth.io">Documentation</a> |
-  <a href="https://scaffoldeth.io">Website</a>
-</h4>
+This repository focuses on simplifying operations within the decentralized finance (DeFi) space. It introduces two innovative components: configurable liquidity pools and a multi-swap executor, addressing common issues like complexity, lengthy processes, and high gas costs.
 
-🧪 An open-source, up-to-date toolkit for building decentralized applications (dapps) on the Ethereum blockchain. It's designed to make it easier for developers to create and deploy smart contracts and build user interfaces that interact with those contracts.
+## Problem Statement
 
-⚙️ Built using NextJS, RainbowKit, Hardhat, Wagmi, Viem, and Typescript.
+DeFi operations often face the following challenges:
+- Complexity in performing multiple token swaps.
+- Lengthy processes requiring user interaction at every step.
+- High gas costs due to multiple transactions.
+- Limited configurability in liquidity pools, especially for price curves and other parameters.
 
-- ✅ **Contract Hot Reload**: Your frontend auto-adapts to your smart contract as you edit it.
-- 🪝 **[Custom hooks](https://docs.scaffoldeth.io/hooks/)**: Collection of React hooks wrapper around [wagmi](https://wagmi.sh/) to simplify interactions with smart contracts with typescript autocompletion.
-- 🧱 [**Components**](https://docs.scaffoldeth.io/components/): Collection of common web3 components to quickly build your frontend.
-- 🔥 **Burner Wallet & Local Faucet**: Quickly test your application with a burner wallet and local faucet.
-- 🔐 **Integration with Wallet Providers**: Connect to different wallet providers and interact with the Ethereum network.
+## Solution
 
-![Debug Contracts tab](https://github.com/scaffold-eth/scaffold-eth-2/assets/55535804/b237af0c-5027-4849-a5c1-2e31495cccb1)
+This project offers:
+1. **Configurable Liquidity Pools**: A customizable liquidity pool implementation, allowing developers to define their own pricing curves by implementing the `IPricingCurve` interface. This enables:
+   - Dynamic token output calculation.
+   - Custom LP token generation mechanisms.
+   - Enhanced flexibility to suit different DeFi protocols.
 
-## Requirements
+2. **MultiSwap Executor**: A contract enabling users to perform batch token swaps across multiple liquidity pools in a single transaction. It leverages the ERC-2612 standard for off-chain signatures and the `permit` function, allowing gas-efficient approvals without direct on-chain transactions.
 
-Before you begin, you need to install the following tools:
+## Features
 
-- [Node (>= v18.18)](https://nodejs.org/en/download/)
-- Yarn ([v1](https://classic.yarnpkg.com/en/docs/install/) or [v2+](https://yarnpkg.com/getting-started/install))
-- [Git](https://git-scm.com/downloads)
+- **Configurable Pricing Curves**: Support for various pricing strategies through an extendable interface.
+- **Batch Swapping**: Efficiently swap multiple tokens across pools in one transaction.
+- **Off-Chain Signatures**: Reduced gas costs by utilizing the ERC-2612 `permit` functionality.
+- **Modular Design**: Easy integration with other DeFi protocols.
 
-## Quickstart
+## Installation
 
-To get started with Scaffold-ETH 2, follow the steps below:
+This project is built on [Scaffold-ETH](https://github.com/scaffold-eth/scaffold-eth), providing a robust framework for Ethereum-based development.
 
-1. Install dependencies if it was skipped in CLI:
+### Prerequisites
 
-```
-cd my-dapp-example
-yarn install
-```
+Ensure you have the following installed:
+- [Node.js](https://nodejs.org/) (v16 or higher)
+- [Yarn](https://yarnpkg.com/)
+- [Hardhat](https://hardhat.org/)
 
-2. Run a local network in the first terminal:
+### Setup
 
-```
-yarn chain
-```
+1. Clone this repository:
+   ```bash
+   git clone https://github.com/your-repo/multiswap-liquidity-pools.git
+   cd multiswap-liquidity-pools
+   ```
 
-This command starts a local Ethereum network using Hardhat. The network runs on your local machine and can be used for testing and development. You can customize the network configuration in `packages/hardhat/hardhat.config.ts`.
+2. Install dependencies:
+   ```bash
+   yarn install
+   ```
 
-3. On a second terminal, deploy the test contract:
+3. Start the development environment:
+   ```bash
+   yarn start
+   ```
 
-```
-yarn deploy
-```
+4. Compile the smart contracts:
+   ```bash
+   yarn hardhat compile
+   ```
 
-This command deploys a test smart contract to the local network. The contract is located in `packages/hardhat/contracts` and can be modified to suit your needs. The `yarn deploy` command uses the deploy script located in `packages/hardhat/deploy` to deploy the contract to the network. You can also customize the deploy script.
+5. Run tests:
+   ```bash
+   yarn hardhat test
+   ```
 
-4. On a third terminal, start your NextJS app:
+## Contracts Overview
 
-```
-yarn start
-```
+### 1. Configurable Liquidity Pools
+- Implements a dynamic pricing mechanism using the `IPricingCurve` interface.
+- Supports depositing, withdrawing, and swapping tokens with custom logic for LP token issuance.
 
-Visit your app on: `http://localhost:3000`. You can interact with your smart contract using the `Debug Contracts` page. You can tweak the app config in `packages/nextjs/scaffold.config.ts`.
+### 2. MultiSwap Executor
+- Facilitates batch token swaps across multiple pools.
+- Utilizes off-chain signatures for approvals via the `permit` function, reducing gas costs and simplifying user interaction.
 
-Run smart contract test with `yarn hardhat:test`
+## Usage
 
-- Edit your smart contracts in `packages/hardhat/contracts`
-- Edit your frontend homepage at `packages/nextjs/app/page.tsx`. For guidance on [routing](https://nextjs.org/docs/app/building-your-application/routing/defining-routes) and configuring [pages/layouts](https://nextjs.org/docs/app/building-your-application/routing/pages-and-layouts) checkout the Next.js documentation.
-- Edit your deployment scripts in `packages/hardhat/deploy`
+1. Deploy contracts on a local or test network:
+   ```bash
+   yarn hardhat deploy
+   ```
 
+2. Interact with the contracts using the provided front-end:
+   - Configure liquidity pools.
+   - Execute batch swaps.
 
-## Documentation
+3. Example batch swap:
+   Use the `executeBatchSwapWithPermit` function to perform multiple swaps with minimal user interaction.
 
-Visit our [docs](https://docs.scaffoldeth.io) to learn how to start building with Scaffold-ETH 2.
+## Roadmap
 
-To know more about its features, check out our [website](https://scaffoldeth.io).
+1. **Testnet Deployment**:
+   - Deploy contracts to popular Ethereum testnets (e.g. Sepolia).
+2. **Enhanced Pricing Curves**:
+   - Add new implementations for pricing curves.
+   - Integrate price feeds from oracles like Chainlink.
+   - Implement user incentive systems.
+3. **UI Development**:
+   - Create a user-friendly interface for interacting with the MultiSwap Executor and liquidity pools.
+4. **Auditing**:
+   - Perform security audits to ensure robustness.
 
-## Contributing to Scaffold-ETH 2
+## Contributing
 
-We welcome contributions to Scaffold-ETH 2!
+Contributions are welcome! Please fork the repository and submit a pull request for any changes or improvements.
 
-Please see [CONTRIBUTING.MD](https://github.com/scaffold-eth/scaffold-eth-2/blob/main/CONTRIBUTING.md) for more information and guidelines for contributing to Scaffold-ETH 2.
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
+
+## Acknowledgments
+
+- Built on [Scaffold-ETH](https://github.com/scaffold-eth/scaffold-eth).
+- Inspired by the challenges of simplifying DeFi interactions.
