@@ -51,19 +51,9 @@ Ensure you have the following installed:
    yarn install
    ```
 
-3. Start the development environment:
-   ```bash
-   yarn start
-   ```
-
-4. Compile the smart contracts:
-   ```bash
-   yarn hardhat compile
-   ```
-
 5. Run tests:
    ```bash
-   yarn hardhat test
+   yarn test
    ```
 
 ## Contracts Overview
@@ -78,9 +68,14 @@ Ensure you have the following installed:
 
 ## Usage
 
-1. Deploy contracts on a local or test network:
+1. Start localhost chain:
+    ```bash
+   yarn chain
+   ```
+
+2. Deploy contracts on a local or test network:
    ```bash
-   yarn hardhat deploy
+   yarn deploy
    ```
 
 2. Interact with the contracts using the provided front-end:
