@@ -1,44 +1,87 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { Contract } from "ethers";
+import { ethers } from "hardhat";
 
-/**
- * Deploys a contract named "YourContract" using the deployer account and
- * constructor arguments set to the deployer address
- *
- * @param hre HardhatRuntimeEnvironment object.
- */
-const deployYourContract: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-  /*
-    On localhost, the deployer account is the one that comes with Hardhat, which is already funded.
-
-    When deploying to live networks (e.g `yarn deploy --network sepolia`), the deployer account
-    should have sufficient balance to pay for the gas fees for contract creation.
-
-    You can generate a random account with `yarn generate` or `yarn account:import` to import your
-    existing PK which will fill DEPLOYER_PRIVATE_KEY_ENCRYPTED in the .env file (then used on hardhat.config.ts)
-    You can run the `yarn account` command to check your balance in every network.
-  */
+const deployContracts: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployer } = await hre.getNamedAccounts();
-  const { deploy } = hre.deployments;
+  const { deploy, get } = hre.deployments;
 
-  await deploy("YourContract", {
+  console.log("Deploying WETH...");
+  const WETHDeployment = await deploy("MockToken", {
     from: deployer,
-    // Contract constructor arguments
-    args: [deployer],
+    args: ["Wrapped Ether", "WETH", ethers.parseEther("1000000")], 
     log: true,
-    // autoMine: can be passed to the deploy function to make the deployment process faster on local networks by
-    // automatically mining the contract deployment transaction. There is no effect on live networks.
     autoMine: true,
   });
 
-  // Get the deployed contract to interact with it after deploying.
-  const yourContract = await hre.ethers.getContract<Contract>("YourContract", deployer);
-  console.log("👋 Initial greeting:", await yourContract.greeting());
+  console.log("Deploying USDC...");
+  const USDCDeployment = await deploy("MockToken", {
+    from: deployer,
+    args: ["USD Coin", "USDC", ethers.parseUnits("1000000", 18)], 
+    log: true,
+    autoMine: true,
+  });
+
+  console.log("Deploying WBTC...");
+  const WBTCDeployment = await deploy("MockToken", {
+    from: deployer,
+    args: ["Wrapped BTC", "WBTC", ethers.parseUnits("1000000", 18)], 
+    log: true,
+    autoMine: true,
+  });
+
+  console.log("Deploying ProductCurve...");
+  const ProductCurveDeployment = await deploy("ConstantProductCurve", {
+    from: deployer,
+    log: true,
+    autoMine: true,
+  });
+
+  const WETHAddress = WETHDeployment.address;
+  const USDCAAddress = USDCDeployment.address;
+  const WBTCAddress = WBTCDeployment.address;
+  const productcurveaddr = ProductCurveDeployment.address;
+
+
+  console.log(`WETH deployed at: ${WETHAddress}`);
+  console.log(`USDC deployed at: ${USDCAAddress}`);
+  console.log(`WBTC deployed at: ${WBTCAddress}`);
+  console.log(`ProductCurve deployed at: ${productcurveaddr}`);
+
+  
+  console.log("Deploying WETH/USDC LiquidityPool...");
+  const WETHUSDCliquidityPoolDeployment = await deploy("LiquidityPool", {
+    from: deployer,
+    args: [WETHAddress, USDCAAddress, "WETH", "USDC", productcurveaddr], 
+    log: true,
+    autoMine: true,
+  });
+
+  console.log(`WETH/USDC LiquidityPool deployed at: ${WETHUSDCliquidityPoolDeployment.address}`);
+
+  console.log("Deploying WBTC/USDC LiquidityPool...");
+  const WBTCUSDCliquidityPoolDeployment = await deploy("LiquidityPool", {
+    from: deployer,
+    args: [WBTCAddress, USDCAAddress, "WBTC", "USDC", productcurveaddr], 
+    log: true,
+    autoMine: true,
+  });
+
+  console.log(`WBTC/USDC LiquidityPool deployed at: ${WBTCUSDCliquidityPoolDeployment.address}`);
+
+  
+  console.log("Deploying MultiSwapExecutor...");
+  const multiSwapExecutorDeployment = await deploy("MultiSwapExecutor", {
+    from: deployer,
+    args: [], 
+    log: true,
+    autoMine: true,
+  });
+
+  console.log(`MultiSwapExecutor deployed at: ${multiSwapExecutorDeployment.address}`);
 };
 
-export default deployYourContract;
+export default deployContracts;
 
-// Tags are useful if you have multiple deploy files and only want to run one of them.
-// e.g. yarn deploy --tags YourContract
-deployYourContract.tags = ["YourContract"];
+deployContracts.tags = ["LiquidityPool", "MockToken", "ConstantProductCurve", "MultiSwapExecutor"];
