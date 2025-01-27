@@ -78,12 +78,11 @@ Ensure you have the following installed:
    yarn deploy
    ```
 
-2. Interact with the contracts using the provided front-end:
-   - Configure liquidity pools.
-   - Execute batch swaps.
-
-3. Example batch swap:
-   Use the `executeBatchSwapWithPermit` function to perform multiple swaps with minimal user interaction.
+3. Use or create custom scripts to interact with contracts:
+   ```bash
+   cd .\packages\hardhat\scripts\     
+   yarn hardhat run usage.ts
+   ```
 
 ## Roadmap
 
